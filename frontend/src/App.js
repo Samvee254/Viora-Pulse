@@ -11,6 +11,18 @@ L.Icon.Default.mergeOptions({
   shadowUrl: require("leaflet/dist/images/marker-shadow.png"),
 });
 
+const createColoredIcon = (color) => new L.Icon({
+  iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-${color}.png`,
+  shadowUrl: require("leaflet/dist/images/marker-shadow.png"),
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+
+const redIcon = createColoredIcon("red");
+const greenIcon = createColoredIcon("green");
+
 const API = "http://127.0.0.1:8000";
 
 const styles = {
@@ -326,6 +338,21 @@ export default function App() {
         </div>
       </header>
 
+      {unavailable > 0 && (
+        <div style={{
+          background: "linear-gradient(135deg, #cc0000, #ff4444)",
+          color: "white",
+          padding: "12px 30px",
+          textAlign: "center",
+          fontSize: "14px",
+          fontWeight: "600",
+          letterSpacing: "0.5px",
+          boxShadow: "0 2px 10px rgba(204,0,0,0.3)",
+        }}>
+          ⚠️ {unavailable} area{unavailable > 1 ? "s are" : " is"} currently reporting utility outages in Kenya
+        </div>
+      )}
+
       <main style={styles.main}>
         <div style={styles.statsBar}>
           <div style={styles.statCard}>
@@ -368,7 +395,7 @@ export default function App() {
                       radius={3000}
                       pathOptions={{ color, fillColor: color, fillOpacity: 0.3 }}
                     />
-                    <Marker position={[loc.latitude, loc.longitude]}>
+                    <Marker position={[loc.latitude, loc.longitude]} icon={report.status === "unavailable" ? redIcon : greenIcon}>
                       <Popup>
                         <strong>{loc.name}, {loc.county}</strong><br />
                         {report.utility_type}: <strong style={{ color }}>{report.status}</strong><br />
