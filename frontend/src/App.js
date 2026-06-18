@@ -254,6 +254,7 @@ export default function App() {
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     fetchAll();
@@ -354,7 +355,103 @@ export default function App() {
       )}
 
       <main style={styles.main}>
-        <div style={styles.statsBar}>
+        <div style={{
+          background: "white",
+          borderRadius: "12px",
+          padding: "16px 20px",
+          marginBottom: "20px",
+          boxShadow: "0 2px 10px rgba(0,0,0,0.07)",
+          display: "flex",
+          gap: "12px",
+          alignItems: "center",
+        }}>
+          <span style={{ fontSize: "20px" }}>🔍</span>
+          <input
+            type="text"
+            placeholder="Search area e.g. Westlands, Kibera, Kisumu..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            style={{
+              flex: 1,
+              padding: "10px 14px",
+              borderRadius: "8px",
+              border: "2px solid #e8e8e8",
+              fontSize: "14px",
+              outline: "none",
+              fontFamily: "inherit",
+            }}
+          />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              style={{ background: "none", border: "none", fontSize: "18px", cursor: "pointer", color: "#aaa" }}
+            >✕</button>
+          )}
+        </div>
+
+        {search && (
+          <div style={{
+            background: "white",
+            borderRadius: "12px",
+            padding: "20px",
+            marginBottom: "20px",
+            boxShadow: "0 2px 10px rgba(0,0,0,0.07)",
+          }}>
+            <h3 style={{ margin: "0 0 14px 0", color: "#1a1a1a" }}>
+              🔍 Results for "{search}"
+            </h3>
+            {reports.filter(r => {
+              const loc = getLocation(r.location_id);
+              return loc && (
+                loc.name.toLowerCase().includes(search.toLowerCase()) ||
+                loc.county.toLowerCase().includes(search.toLowerCase())
+              );
+            }).length === 0 ? (
+              <p style={{ color: "#aaa", margin: 0 }}>No reports found for "{search}"</p>
+            ) : (
+              reports.filter(r => {
+                const loc = getLocation(r.location_id);
+                return loc && (
+                  loc.name.toLowerCase().includes(search.toLowerCase()) ||
+                  loc.county.toLowerCase().includes(search.toLowerCase())
+                );
+              }).map(report => {
+                const loc = getLocation(report.location_id);
+                const isUnavailable = report.status === "unavailable";
+                return (
+                  <div key={report.id} style={{
+                    padding: "14px",
+                    borderRadius: "10px",
+                    marginBottom: "10px",
+                    background: isUnavailable ? "#fff5f5" : "#f5fff5",
+                    borderLeft: `4px solid ${isUnavailable ? "#cc0000" : "#006600"}`,
+                  }}>
+                    <p style={{ fontWeight: "700", margin: "0 0 4px 0" }}>
+                      📍 {loc.name}, {loc.county}
+                      <span style={{
+                        display: "inline-block",
+                        padding: "2px 10px",
+                        borderRadius: "20px",
+                        fontSize: "12px",
+                        fontWeight: "700",
+                        marginLeft: "8px",
+                        background: isUnavailable ? "#ffe6e6" : "#e6ffe6",
+                        color: isUnavailable ? "#cc0000" : "#006600",
+                      }}>
+                        {isUnavailable ? "❌" : "✅"} {report.status}
+                      </span>
+                    </p>
+                    <p style={{ fontSize: "13px", color: "#555", margin: 0 }}>
+                      {report.utility_type === "water" ? "💧" : "⚡"} {report.utility_type} • {new Date(report.timestamp).toLocaleString()}
+                    </p>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        )}
+
+<div style={styles.statsBar}>
           <div style={styles.statCard}>
             <p style={styles.statNumber}>{reports.length}</p>
             <p style={styles.statLabel}>Total Reports</p>
