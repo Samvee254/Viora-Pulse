@@ -350,7 +350,7 @@ export default function App() {
             </div>
             <MapContainer
               center={[-1.2921, 36.8219]}
-              zoom={7}
+              zoom={9}
               style={{ height: "500px" }}
             >
               <TileLayer
