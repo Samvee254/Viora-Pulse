@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine
 from app import models
 from app.routes import reports, locations
@@ -7,8 +8,16 @@ models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="Viora Pulse",
-    description="Real-time utility status platform for Kenya. Know Before You Go. 🇰🇪",
+    description="Real-time utility status platform for Kenya. Know Before You Go.",
     version="1.0.0"
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["*"],
 )
 
 app.include_router(locations.router, prefix="/locations", tags=["Locations"])
@@ -17,7 +26,7 @@ app.include_router(reports.router, prefix="/reports", tags=["Reports"])
 @app.get("/")
 def root():
     return {
-        "message": "Welcome to Viora Pulse 🇰🇪",
+        "message": "Welcome to Viora Pulse",
         "tagline": "Know Before You Go",
         "status": "running"
     }
