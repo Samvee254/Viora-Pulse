@@ -255,6 +255,12 @@ export default function App() {
   const [isError, setIsError] = useState(false);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState(null);
+  const [showAuth, setShowAuth] = useState(false);
+  const [authMode, setAuthMode] = useState("login");
+  const [authForm, setAuthForm] = useState({ username: "", email: "", password: "" });
+  const [authMessage, setAuthMessage] = useState("");
 
   useEffect(() => {
     fetchAll();
@@ -271,6 +277,28 @@ export default function App() {
       setLocations(locRes.data);
       setReports(repRes.data);
     } catch (e) {}
+  };
+
+  const handleAuth = async () => {
+    setAuthMessage("");
+    try {
+      const endpoint = authMode === "login" ? "login" : "signup";
+      const payload = authMode === "login"
+        ? { email: authForm.email, password: authForm.password }
+        : { username: authForm.username, email: authForm.email, password: authForm.password };
+      const res = await axios.post(`${API}/auth/${endpoint}`, payload);
+      setToken(res.data.access_token);
+      setUser(res.data.user);
+      setShowAuth(false);
+      setAuthForm({ username: "", email: "", password: "" });
+    } catch (e) {
+      setAuthMessage(e.response?.data?.detail || "Something went wrong.");
+    }
+  };
+
+  const logout = () => {
+    setUser(null);
+    setToken(null);
   };
 
   const submitReport = async () => {
@@ -335,12 +363,85 @@ export default function App() {
               <p style={styles.tagline}>Know Before You Go</p>
             </div>
           </div>
-          <div style={styles.liveTag}>
-            <span style={{ width: "8px", height: "8px", background: "white", borderRadius: "50%", display: "inline-block" }}></span>
-            LIVE
+          <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+            <div style={styles.liveTag}>
+              <span style={{ width: "8px", height: "8px", background: "white", borderRadius: "50%", display: "inline-block" }}></span>
+              LIVE
+            </div>
+            {user ? (
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <span style={{ color: "white", fontSize: "14px", fontWeight: "600" }}>👤 {user.username}</span>
+                <button
+                  onClick={logout}
+                  style={{ background: "rgba(255,255,255,0.2)", color: "white", border: "none", padding: "8px 14px", borderRadius: "20px", fontSize: "13px", cursor: "pointer", fontWeight: "600" }}
+                >Log Out</button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowAuth(true)}
+                style={{ background: "white", color: "#006600", border: "none", padding: "8px 18px", borderRadius: "20px", fontSize: "13px", cursor: "pointer", fontWeight: "700" }}
+              >Sign Up / Log In</button>
+            )}
           </div>
         </div>
       </header>
+
+      {showAuth && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+          background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center",
+          justifyContent: "center", zIndex: 1000,
+        }}>
+          <div style={{ background: "white", borderRadius: "16px", padding: "30px", width: "350px", boxShadow: "0 10px 40px rgba(0,0,0,0.3)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+              <h2 style={{ margin: 0, color: "#1a1a1a" }}>
+                {authMode === "login" ? "Log In" : "Sign Up"}
+              </h2>
+              <button onClick={() => setShowAuth(false)} style={{ background: "none", border: "none", fontSize: "20px", cursor: "pointer", color: "#aaa" }}>✕</button>
+            </div>
+
+            {authMode === "signup" && (
+              <input
+                style={styles.input}
+                type="text"
+                placeholder="Username"
+                value={authForm.username}
+                onChange={e => setAuthForm({ ...authForm, username: e.target.value })}
+              />
+            )}
+            <input
+              style={styles.input}
+              type="email"
+              placeholder="Email"
+              value={authForm.email}
+              onChange={e => setAuthForm({ ...authForm, email: e.target.value })}
+            />
+            <input
+              style={styles.input}
+              type="password"
+              placeholder="Password"
+              value={authForm.password}
+              onChange={e => setAuthForm({ ...authForm, password: e.target.value })}
+            />
+            <button style={styles.btn} onClick={handleAuth}>
+              {authMode === "login" ? "Log In" : "Sign Up"}
+            </button>
+            {authMessage && <div style={styles.errorMsg}>{authMessage}</div>}
+            <p style={{ textAlign: "center", marginTop: "16px", fontSize: "13px", color: "#888" }}>
+              {authMode === "login" ? "Don't have an account?" : "Already have an account?"}{" "}
+              <span
+                style={{ color: "#006600", fontWeight: "700", cursor: "pointer" }}
+                onClick={() => { setAuthMode(authMode === "login" ? "signup" : "login"); setAuthMessage(""); }}
+              >
+                {authMode === "login" ? "Sign Up" : "Log In"}
+              </span>
+            </p>
+            <p style={{ textAlign: "center", marginTop: "10px", fontSize: "12px", color: "#aaa" }}>
+              You can also report anonymously without an account.
+            </p>
+          </div>
+        </div>
+      )}
 
       {unavailable > 0 && (
         <div style={{
