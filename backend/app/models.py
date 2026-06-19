@@ -1,6 +1,11 @@
 from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Enum
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
+
+EAT = timezone(timedelta(hours=3))
+
+def kenya_now():
+    return datetime.now(EAT).replace(tzinfo=None)
 import enum
 from app.database import Base
 
@@ -17,7 +22,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
     email = Column(String, unique=True, index=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=kenya_now)
     reports = relationship("Report", back_populates="user")
 
 class Location(Base):
@@ -36,6 +41,6 @@ class Report(Base):
     location_id = Column(Integer, ForeignKey("locations.id"))
     utility_type = Column(Enum(UtilityType))
     status = Column(Enum(StatusType))
-    timestamp = Column(DateTime, default=datetime.utcnow)
+    timestamp = Column(DateTime, default=kenya_now)
     user = relationship("User", back_populates="reports")
     location = relationship("Location", back_populates="reports")

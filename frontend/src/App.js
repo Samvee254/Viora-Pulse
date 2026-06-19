@@ -282,11 +282,14 @@ export default function App() {
     setLoading(true);
     setMessage("");
     try {
+      const knownLoc = locations.find(
+        l => l.name.toLowerCase() === form.location_name.toLowerCase()
+      );
       const locRes = await axios.post(`${API}/locations/`, {
         name: form.location_name,
         county: form.county,
-        latitude: 0,
-        longitude: 0,
+        latitude: knownLoc ? knownLoc.latitude : -1.2921,
+        longitude: knownLoc ? knownLoc.longitude : 36.8219,
       });
       await axios.post(`${API}/reports/`, {
         location_id: locRes.data.id,
@@ -517,15 +520,45 @@ export default function App() {
                   type="text"
                   placeholder="Your area e.g. Mlolongo"
                   value={form.location_name}
-                  onChange={(e) => setForm({ ...form, location_name: e.target.value })}
+                  list="known-locations"
+                  onChange={(e) => {
+                    const typed = e.target.value;
+                    const match = locations.find(
+                      l => l.name.toLowerCase() === typed.toLowerCase()
+                    );
+                    if (match) {
+                      setForm({ ...form, location_name: typed, county: match.county, locationLocked: true });
+                    } else {
+                      setForm({ ...form, location_name: typed, locationLocked: false });
+                    }
+                  }}
                 />
+                <datalist id="known-locations">
+                  {[...new Set(locations.map(l => l.name))].map((name, i) => (
+                    <option key={i} value={name} />
+                  ))}
+                </datalist>
                 <input
-                  style={styles.input}
+                  style={{
+                    ...styles.input,
+                    background: form.locationLocked ? "#f0f0f0" : "white",
+                    color: form.locationLocked ? "#555" : "#1a1a1a",
+                  }}
                   type="text"
                   placeholder="County e.g. Machakos"
                   value={form.county}
-                  onChange={(e) => setForm({ ...form, county: e.target.value })}
+                  readOnly={form.locationLocked}
+                  onChange={(e) => {
+                    if (!form.locationLocked) {
+                      setForm({ ...form, county: e.target.value });
+                    }
+                  }}
                 />
+                {form.locationLocked && (
+                  <p style={{ fontSize: "12px", color: "#888", margin: "-6px 0 12px 0" }}>
+                    📍 County auto-filled from known location
+                  </p>
+                )}
                 <select
                   style={styles.select}
                   value={form.utility_type}
