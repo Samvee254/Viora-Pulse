@@ -420,6 +420,19 @@ export default function App() {
             const latestWater = latestOf(waterReports);
             const latestElectricity = latestOf(electricityReports);
 
+            const confidenceFor = (arr, latest) => {
+              if (!latest || arr.length === 0) return null;
+              const windowHrs = 6;
+              const recent = arr.filter(r => (Date.now() - new Date(r.timestamp)) / 3600000 <= windowHrs);
+              if (recent.length === 0) return null;
+              const agreeing = recent.filter(r => r.status === latest.status).length;
+              const pct = Math.round((agreeing / recent.length) * 100);
+              return { pct, count: recent.length };
+            };
+
+            const waterConfidence = confidenceFor(waterReports, latestWater);
+            const electricityConfidence = confidenceFor(electricityReports, latestElectricity);
+
             const timeAgo = (ts) => {
               const mins = Math.floor((Date.now() - new Date(ts)) / 60000);
               if (mins < 1) return "just now";
@@ -435,7 +448,7 @@ export default function App() {
               return hrs > STALE_HOURS;
             };
 
-            const StatusRow = ({ icon, label, report }) => {
+            const StatusRow = ({ icon, label, report, confidence }) => {
               if (!report) {
                 return (
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid #f0f0f0" }}>
@@ -460,6 +473,11 @@ export default function App() {
                     <p style={{ margin: "2px 0 0 0", fontSize: "12px", color: stale ? "#cc8800" : "#999" }}>
                       {stale ? "⚠️ Stale — " : "Updated "}{timeAgo(report.timestamp)}
                     </p>
+                    {confidence && !stale && (
+                      <p style={{ margin: "2px 0 0 0", fontSize: "11px", color: "#888" }}>
+                        Confidence: {confidence.pct}% ({confidence.count} report{confidence.count > 1 ? "s" : ""})
+                      </p>
+                    )}
                   </div>
                 </div>
               );
@@ -473,8 +491,8 @@ export default function App() {
                 <h3 style={{ margin: "0 0 8px 0", color: "#1a1a1a" }}>
                   📍 {loc.name}, {loc.county}
                 </h3>
-                <StatusRow icon="💧" label="Water" report={latestWater} />
-                <StatusRow icon="⚡" label="Electricity" report={latestElectricity} />
+                <StatusRow icon="💧" label="Water" report={latestWater} confidence={waterConfidence} />
+                <StatusRow icon="⚡" label="Electricity" report={latestElectricity} confidence={electricityConfidence} />
               </div>
             );
           });
