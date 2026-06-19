@@ -7,6 +7,13 @@ router = APIRouter()
 
 @router.post("/", response_model=schemas.LocationResponse)
 def create_location(location: schemas.LocationCreate, db: Session = Depends(get_db)):
+    existing = db.query(models.Location).filter(
+        models.Location.name.ilike(location.name),
+        models.Location.county.ilike(location.county)
+    ).first()
+    if existing:
+        return existing
+
     db_location = models.Location(
         name=location.name,
         county=location.county,

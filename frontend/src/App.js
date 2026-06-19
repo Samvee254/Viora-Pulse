@@ -392,69 +392,87 @@ export default function App() {
           )}
         </div>
 
-        {search && (
-          <div style={{
-            background: "white",
-            borderRadius: "12px",
-            padding: "20px",
-            marginBottom: "20px",
-            boxShadow: "0 2px 10px rgba(0,0,0,0.07)",
-          }}>
-            <h3 style={{ margin: "0 0 14px 0", color: "#1a1a1a" }}>
-              🔍 Results for "{search}"
-            </h3>
-            {reports.filter(r => {
-              const loc = getLocation(r.location_id);
-              return loc && (
-                loc.name.toLowerCase().includes(search.toLowerCase()) ||
-                loc.county.toLowerCase().includes(search.toLowerCase())
-              );
-            }).length === 0 ? (
-              <p style={{ color: "#aaa", margin: 0 }}>No reports found for "{search}"</p>
-            ) : (
-              reports.filter(r => {
-                const loc = getLocation(r.location_id);
-                return loc && (
-                  loc.name.toLowerCase().includes(search.toLowerCase()) ||
-                  loc.county.toLowerCase().includes(search.toLowerCase())
-                );
-              }).map(report => {
-                const loc = getLocation(report.location_id);
-                const isUnavailable = report.status === "unavailable";
+{search && (() => {
+          const matchingLocations = locations.filter(loc =>
+            loc.name.toLowerCase().includes(search.toLowerCase()) ||
+            loc.county.toLowerCase().includes(search.toLowerCase())
+          );
+
+          if (matchingLocations.length === 0) {
+            return (
+              <div style={{
+                background: "white", borderRadius: "12px", padding: "20px",
+                marginBottom: "20px", boxShadow: "0 2px 10px rgba(0,0,0,0.07)",
+              }}>
+                <p style={{ color: "#aaa", margin: 0 }}>No data found for "{search}" yet. Be the first to report it!</p>
+              </div>
+            );
+          }
+
+          return matchingLocations.map(loc => {
+            const locReports = reports.filter(r => r.location_id === loc.id);
+            const waterReports = locReports.filter(r => r.utility_type === "water");
+            const electricityReports = locReports.filter(r => r.utility_type === "electricity");
+
+            const latestOf = (arr) => arr.length === 0 ? null :
+              arr.reduce((a, b) => new Date(a.timestamp) > new Date(b.timestamp) ? a : b);
+
+            const latestWater = latestOf(waterReports);
+            const latestElectricity = latestOf(electricityReports);
+
+            const timeAgo = (ts) => {
+              const mins = Math.floor((Date.now() - new Date(ts)) / 60000);
+              if (mins < 1) return "just now";
+              if (mins < 60) return `${mins} min${mins > 1 ? "s" : ""} ago`;
+              const hrs = Math.floor(mins / 60);
+              if (hrs < 24) return `${hrs} hr${hrs > 1 ? "s" : ""} ago`;
+              return `${Math.floor(hrs / 24)} day(s) ago`;
+            };
+
+            const StatusRow = ({ icon, label, report }) => {
+              if (!report) {
                 return (
-                  <div key={report.id} style={{
-                    padding: "14px",
-                    borderRadius: "10px",
-                    marginBottom: "10px",
-                    background: isUnavailable ? "#fff5f5" : "#f5fff5",
-                    borderLeft: `4px solid ${isUnavailable ? "#cc0000" : "#006600"}`,
-                  }}>
-                    <p style={{ fontWeight: "700", margin: "0 0 4px 0" }}>
-                      📍 {loc.name}, {loc.county}
-                      <span style={{
-                        display: "inline-block",
-                        padding: "2px 10px",
-                        borderRadius: "20px",
-                        fontSize: "12px",
-                        fontWeight: "700",
-                        marginLeft: "8px",
-                        background: isUnavailable ? "#ffe6e6" : "#e6ffe6",
-                        color: isUnavailable ? "#cc0000" : "#006600",
-                      }}>
-                        {isUnavailable ? "❌" : "✅"} {report.status}
-                      </span>
-                    </p>
-                    <p style={{ fontSize: "13px", color: "#555", margin: 0 }}>
-                      {report.utility_type === "water" ? "💧" : "⚡"} {report.utility_type} • {new Date(report.timestamp).toLocaleString()}
-                    </p>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid #f0f0f0" }}>
+                    <span style={{ fontWeight: "600" }}>{icon} {label}</span>
+                    <span style={{ color: "#aaa", fontSize: "13px" }}>No reports yet</span>
                   </div>
                 );
-              })
-            )}
-          </div>
-        )}
+              }
+              const isAvailable = report.status === "available";
+              return (
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid #f0f0f0" }}>
+                  <span style={{ fontWeight: "600" }}>{icon} {label}</span>
+                  <div style={{ textAlign: "right" }}>
+                    <span style={{
+                      fontWeight: "700",
+                      color: isAvailable ? "#006600" : "#cc0000",
+                    }}>
+                      {isAvailable ? "🟢 Available" : "🔴 Outage Reported"}
+                    </span>
+                    <p style={{ margin: "2px 0 0 0", fontSize: "12px", color: "#999" }}>
+                      Updated {timeAgo(report.timestamp)}
+                    </p>
+                  </div>
+                </div>
+              );
+            };
 
-<div style={styles.statsBar}>
+            return (
+              <div key={loc.id} style={{
+                background: "white", borderRadius: "12px", padding: "20px",
+                marginBottom: "16px", boxShadow: "0 2px 10px rgba(0,0,0,0.07)",
+              }}>
+                <h3 style={{ margin: "0 0 8px 0", color: "#1a1a1a" }}>
+                  📍 {loc.name}, {loc.county}
+                </h3>
+                <StatusRow icon="💧" label="Water" report={latestWater} />
+                <StatusRow icon="⚡" label="Electricity" report={latestElectricity} />
+              </div>
+            );
+          });
+        })()}
+
+        <div style={styles.statsBar}>
           <div style={styles.statCard}>
             <p style={styles.statNumber}>{reports.length}</p>
             <p style={styles.statLabel}>Total Reports</p>
