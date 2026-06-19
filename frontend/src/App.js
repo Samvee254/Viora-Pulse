@@ -429,6 +429,12 @@ export default function App() {
               return `${Math.floor(hrs / 24)} day(s) ago`;
             };
 
+            const STALE_HOURS = 6;
+            const isStale = (ts) => {
+              const hrs = (Date.now() - new Date(ts)) / 3600000;
+              return hrs > STALE_HOURS;
+            };
+
             const StatusRow = ({ icon, label, report }) => {
               if (!report) {
                 return (
@@ -439,18 +445,20 @@ export default function App() {
                 );
               }
               const isAvailable = report.status === "available";
+              const stale = isStale(report.timestamp);
               return (
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0", borderBottom: "1px solid #f0f0f0" }}>
                   <span style={{ fontWeight: "600" }}>{icon} {label}</span>
                   <div style={{ textAlign: "right" }}>
                     <span style={{
                       fontWeight: "700",
-                      color: isAvailable ? "#006600" : "#cc0000",
+                      color: stale ? "#999" : (isAvailable ? "#006600" : "#cc0000"),
                     }}>
-                      {isAvailable ? "🟢 Available" : "🔴 Outage Reported"}
+                      {stale ? "⚪ " : (isAvailable ? "🟢 " : "🔴 ")}
+                      {isAvailable ? "Available" : "Outage Reported"}
                     </span>
-                    <p style={{ margin: "2px 0 0 0", fontSize: "12px", color: "#999" }}>
-                      Updated {timeAgo(report.timestamp)}
+                    <p style={{ margin: "2px 0 0 0", fontSize: "12px", color: stale ? "#cc8800" : "#999" }}>
+                      {stale ? "⚠️ Stale — " : "Updated "}{timeAgo(report.timestamp)}
                     </p>
                   </div>
                 </div>
