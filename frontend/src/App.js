@@ -360,36 +360,49 @@ export default function App() {
       <main style={styles.main}>
         <div style={{
           background: "white",
-          borderRadius: "12px",
-          padding: "16px 20px",
-          marginBottom: "20px",
-          boxShadow: "0 2px 10px rgba(0,0,0,0.07)",
-          display: "flex",
-          gap: "12px",
-          alignItems: "center",
+          borderRadius: "16px",
+          padding: "32px 28px",
+          marginBottom: "24px",
+          boxShadow: "0 4px 20px rgba(0,100,0,0.1)",
+          textAlign: "center",
         }}>
-          <span style={{ fontSize: "20px" }}>🔍</span>
-          <input
-            type="text"
-            placeholder="Search area e.g. Westlands, Kibera, Kisumu..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            style={{
-              flex: 1,
-              padding: "10px 14px",
-              borderRadius: "8px",
-              border: "2px solid #e8e8e8",
-              fontSize: "14px",
-              outline: "none",
-              fontFamily: "inherit",
-            }}
-          />
-          {search && (
-            <button
-              onClick={() => setSearch("")}
-              style={{ background: "none", border: "none", fontSize: "18px", cursor: "pointer", color: "#aaa" }}
-            >✕</button>
-          )}
+          <h2 style={{ margin: "0 0 6px 0", color: "#1a1a1a", fontSize: "22px" }}>
+            What's the status in your area?
+          </h2>
+          <p style={{ margin: "0 0 20px 0", color: "#888", fontSize: "14px" }}>
+            Check water and electricity status before you go.
+          </p>
+          <div style={{
+            display: "flex",
+            gap: "12px",
+            alignItems: "center",
+            maxWidth: "600px",
+            margin: "0 auto",
+          }}>
+            <span style={{ fontSize: "20px" }}>🔍</span>
+            <input
+              type="text"
+              placeholder="Type your area e.g. Westlands, Kibera, Kisumu..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              autoFocus
+              style={{
+                flex: 1,
+                padding: "14px 16px",
+                borderRadius: "10px",
+                border: "2px solid #e8e8e8",
+                fontSize: "15px",
+                outline: "none",
+                fontFamily: "inherit",
+              }}
+            />
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                style={{ background: "none", border: "none", fontSize: "18px", cursor: "pointer", color: "#aaa" }}
+              >✕</button>
+            )}
+          </div>
         </div>
 
 {search && (() => {
@@ -513,168 +526,174 @@ export default function App() {
           </div>
         </div>
 
+        <div style={styles.card}>
+          <div style={styles.cardHeader}>
+            <span>🗺️</span>
+            <h2 style={styles.cardTitle}>Live Map — Kenya</h2>
+          </div>
+          <MapContainer
+            center={[-1.2921, 36.8219]}
+            zoom={9}
+            style={{ height: "450px" }}
+          >
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution="&copy; OpenStreetMap contributors"
+            />
+            {reports.map((report) => {
+              const loc = getLocation(report.location_id);
+              if (!loc || !loc.latitude || !loc.longitude) return null;
+              const color = report.status === "unavailable" ? "#cc0000" : "#006600";
+              return (
+                <React.Fragment key={report.id}>
+                  <Circle
+                    center={[loc.latitude, loc.longitude]}
+                    radius={3000}
+                    pathOptions={{ color, fillColor: color, fillOpacity: 0.3 }}
+                  />
+                  <Marker position={[loc.latitude, loc.longitude]} icon={report.status === "unavailable" ? redIcon : greenIcon}>
+                    <Popup>
+                      <strong>{loc.name}, {loc.county}</strong><br />
+                      {report.utility_type}: <strong style={{ color }}>{report.status}</strong><br />
+                      <small>{new Date(report.timestamp).toLocaleString()}</small>
+                    </Popup>
+                  </Marker>
+                </React.Fragment>
+              );
+            })}
+          </MapContainer>
+        </div>
+
+        <div style={{ marginTop: "30px", marginBottom: "16px", textAlign: "center" }}>
+          <h2 style={{ color: "#006600", margin: "0 0 4px 0" }}>🤝 Help Your Community</h2>
+          <p style={{ color: "#888", fontSize: "14px", margin: 0 }}>
+            Seen an outage or service restored? Let others know.
+          </p>
+        </div>
+
         <div style={styles.grid}>
           <div style={styles.card}>
             <div style={styles.cardHeader}>
-              <span>🗺️</span>
-              <h2 style={styles.cardTitle}>Live Map — Kenya</h2>
+              <span>📍</span>
+              <h2 style={styles.cardTitle}>Submit a Report</h2>
             </div>
-            <MapContainer
-              center={[-1.2921, 36.8219]}
-              zoom={9}
-              style={{ height: "500px" }}
-            >
-              <TileLayer
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                attribution="&copy; OpenStreetMap contributors"
+            <div style={styles.formBody}>
+              <input
+                style={styles.input}
+                type="text"
+                placeholder="Your area e.g. Mlolongo"
+                value={form.location_name}
+                list="known-locations"
+                onChange={(e) => {
+                  const typed = e.target.value;
+                  const match = locations.find(
+                    l => l.name.toLowerCase() === typed.toLowerCase()
+                  );
+                  if (match) {
+                    setForm({ ...form, location_name: typed, county: match.county, locationLocked: true });
+                  } else {
+                    setForm({ ...form, location_name: typed, locationLocked: false });
+                  }
+                }}
               />
-              {reports.map((report) => {
-                const loc = getLocation(report.location_id);
-                if (!loc || !loc.latitude || !loc.longitude) return null;
-                const color = report.status === "unavailable" ? "#cc0000" : "#006600";
-                return (
-                  <React.Fragment key={report.id}>
-                    <Circle
-                      center={[loc.latitude, loc.longitude]}
-                      radius={3000}
-                      pathOptions={{ color, fillColor: color, fillOpacity: 0.3 }}
-                    />
-                    <Marker position={[loc.latitude, loc.longitude]} icon={report.status === "unavailable" ? redIcon : greenIcon}>
-                      <Popup>
-                        <strong>{loc.name}, {loc.county}</strong><br />
-                        {report.utility_type}: <strong style={{ color }}>{report.status}</strong><br />
-                        <small>{new Date(report.timestamp).toLocaleString()}</small>
-                      </Popup>
-                    </Marker>
-                  </React.Fragment>
-                );
-              })}
-            </MapContainer>
+              <datalist id="known-locations">
+                {[...new Set(locations.map(l => l.name))].map((name, i) => (
+                  <option key={i} value={name} />
+                ))}
+              </datalist>
+              <input
+                style={{
+                  ...styles.input,
+                  background: form.locationLocked ? "#f0f0f0" : "white",
+                  color: form.locationLocked ? "#555" : "#1a1a1a",
+                }}
+                type="text"
+                placeholder="County e.g. Machakos"
+                value={form.county}
+                readOnly={form.locationLocked}
+                onChange={(e) => {
+                  if (!form.locationLocked) {
+                    setForm({ ...form, county: e.target.value });
+                  }
+                }}
+              />
+              {form.locationLocked && (
+                <p style={{ fontSize: "12px", color: "#888", margin: "-6px 0 12px 0" }}>
+                  📍 County auto-filled from known location
+                </p>
+              )}
+              <select
+                style={styles.select}
+                value={form.utility_type}
+                onChange={(e) => setForm({ ...form, utility_type: e.target.value })}
+              >
+                <option value="water">💧 Water</option>
+                <option value="electricity">⚡ Electricity</option>
+              </select>
+              <select
+                style={styles.select}
+                value={form.status}
+                onChange={(e) => setForm({ ...form, status: e.target.value })}
+              >
+                <option value="unavailable">❌ Unavailable</option>
+                <option value="available">✅ Available</option>
+              </select>
+              <button
+                style={{ ...styles.btn, opacity: loading ? 0.7 : 1 }}
+                onClick={submitReport}
+                disabled={loading}
+              >
+                {loading ? "Submitting..." : "Submit Report 🇰🇪"}
+              </button>
+              {message && (
+                <div style={isError ? styles.errorMsg : styles.successMsg}>
+                  {message}
+                </div>
+              )}
+            </div>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-            <div style={styles.card}>
-              <div style={styles.cardHeader}>
-                <span>📍</span>
-                <h2 style={styles.cardTitle}>Submit a Report</h2>
-              </div>
-              <div style={styles.formBody}>
-                <input
-                  style={styles.input}
-                  type="text"
-                  placeholder="Your area e.g. Mlolongo"
-                  value={form.location_name}
-                  list="known-locations"
-                  onChange={(e) => {
-                    const typed = e.target.value;
-                    const match = locations.find(
-                      l => l.name.toLowerCase() === typed.toLowerCase()
-                    );
-                    if (match) {
-                      setForm({ ...form, location_name: typed, county: match.county, locationLocked: true });
-                    } else {
-                      setForm({ ...form, location_name: typed, locationLocked: false });
-                    }
-                  }}
-                />
-                <datalist id="known-locations">
-                  {[...new Set(locations.map(l => l.name))].map((name, i) => (
-                    <option key={i} value={name} />
-                  ))}
-                </datalist>
-                <input
-                  style={{
-                    ...styles.input,
-                    background: form.locationLocked ? "#f0f0f0" : "white",
-                    color: form.locationLocked ? "#555" : "#1a1a1a",
-                  }}
-                  type="text"
-                  placeholder="County e.g. Machakos"
-                  value={form.county}
-                  readOnly={form.locationLocked}
-                  onChange={(e) => {
-                    if (!form.locationLocked) {
-                      setForm({ ...form, county: e.target.value });
-                    }
-                  }}
-                />
-                {form.locationLocked && (
-                  <p style={{ fontSize: "12px", color: "#888", margin: "-6px 0 12px 0" }}>
-                    📍 County auto-filled from known location
-                  </p>
-                )}
-                <select
-                  style={styles.select}
-                  value={form.utility_type}
-                  onChange={(e) => setForm({ ...form, utility_type: e.target.value })}
-                >
-                  <option value="water">💧 Water</option>
-                  <option value="electricity">⚡ Electricity</option>
-                </select>
-                <select
-                  style={styles.select}
-                  value={form.status}
-                  onChange={(e) => setForm({ ...form, status: e.target.value })}
-                >
-                  <option value="unavailable">❌ Unavailable</option>
-                  <option value="available">✅ Available</option>
-                </select>
-                <button
-                  style={{ ...styles.btn, opacity: loading ? 0.7 : 1 }}
-                  onClick={submitReport}
-                  disabled={loading}
-                >
-                  {loading ? "Submitting..." : "Submit Report 🇰🇪"}
-                </button>
-                {message && (
-                  <div style={isError ? styles.errorMsg : styles.successMsg}>
-                    {message}
-                  </div>
-                )}
-              </div>
+          <div style={styles.card}>
+            <div style={styles.cardHeader}>
+              <span>📋</span>
+              <h2 style={styles.cardTitle}>Recent Reports</h2>
             </div>
-
-            <div style={styles.card}>
-              <div style={styles.cardHeader}>
-                <span>📋</span>
-                <h2 style={styles.cardTitle}>Recent Reports</h2>
-              </div>
-              <div style={styles.reportsList}>
-                {reports.length === 0 && (
-                  <p style={{ color: "#aaa", textAlign: "center", padding: "20px" }}>No reports yet. Be the first! 🇰🇪</p>
-                )}
-                {[...reports].reverse().map((report) => {
-                  const loc = getLocation(report.location_id);
-                  const isUnavailable = report.status === "unavailable";
-                  return (
-                    <div
-                      key={report.id}
-                      style={{
-                        ...styles.reportItem,
-                        background: isUnavailable ? "#fff5f5" : "#f5fff5",
-                        borderLeftColor: isUnavailable ? "#cc0000" : "#006600",
-                      }}
-                    >
-                      <p style={styles.reportName}>
-                        📍 {loc ? `${loc.name}, ${loc.county}` : "Unknown"}
-                        <span style={{
-                          ...styles.badge,
-                          background: isUnavailable ? "#ffe6e6" : "#e6ffe6",
-                          color: isUnavailable ? "#cc0000" : "#006600",
-                        }}>
-                          {isUnavailable ? "❌" : "✅"} {report.status}
-                        </span>
-                      </p>
-                      <p style={styles.reportDetail}>
-                        {report.utility_type === "water" ? "💧" : "⚡"} {report.utility_type} • {new Date(report.timestamp).toLocaleString()}
-                      </p>
-                    </div>
-                  );
-                })}
-              </div>
+            <div style={styles.reportsList}>
+              {reports.length === 0 && (
+                <p style={{ color: "#aaa", textAlign: "center", padding: "20px" }}>No reports yet. Be the first! 🇰🇪</p>
+              )}
+              {[...reports].reverse().map((report) => {
+                const loc = getLocation(report.location_id);
+                const isUnavailable = report.status === "unavailable";
+                return (
+                  <div
+                    key={report.id}
+                    style={{
+                      ...styles.reportItem,
+                      background: isUnavailable ? "#fff5f5" : "#f5fff5",
+                      borderLeftColor: isUnavailable ? "#cc0000" : "#006600",
+                    }}
+                  >
+                    <p style={styles.reportName}>
+                      📍 {loc ? `${loc.name}, ${loc.county}` : "Unknown"}
+                      <span style={{
+                        ...styles.badge,
+                        background: isUnavailable ? "#ffe6e6" : "#e6ffe6",
+                        color: isUnavailable ? "#cc0000" : "#006600",
+                      }}>
+                        {isUnavailable ? "❌" : "✅"} {report.status}
+                      </span>
+                    </p>
+                    <p style={styles.reportDetail}>
+                      {report.utility_type === "water" ? "💧" : "⚡"} {report.utility_type} • {new Date(report.timestamp).toLocaleString()}
+                    </p>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </div>
+
       </main>
 
       <footer style={styles.footer}>
