@@ -23,7 +23,7 @@ const createColoredIcon = (color) => new L.Icon({
 const redIcon = createColoredIcon("red");
 const greenIcon = createColoredIcon("green");
 
-const API = "http://127.0.0.1:8000";
+const API = "https://viora-pulse-backend.onrender.com";
 
 const styles = {
   app: {
