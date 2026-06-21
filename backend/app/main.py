@@ -4,7 +4,18 @@ from app.database import engine
 from app import models
 from app.routes import reports, locations, auth
 
-models.Base.metadata.create_all(bind=engine)
+import time
+
+for attempt in range(5):
+    try:
+        models.Base.metadata.create_all(bind=engine)
+        break
+    except Exception as e:
+        print(f"Database connection attempt {attempt + 1} failed: {e}")
+        if attempt < 4:
+            time.sleep(3)
+        else:
+            raise
 
 app = FastAPI(
     title="Viora Pulse",
