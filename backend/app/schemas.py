@@ -5,10 +5,14 @@ from enum import Enum
 class UtilityType(str, Enum):
     water = "water"
     electricity = "electricity"
+    traffic = "traffic"
 
 class StatusType(str, Enum):
     available = "available"
     unavailable = "unavailable"
+    light = "light"
+    moderate = "moderate"
+    heavy = "heavy"
 
 class LocationCreate(BaseModel):
     name: str

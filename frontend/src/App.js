@@ -726,19 +726,36 @@ export default function App() {
               <select
                 style={styles.select}
                 value={form.utility_type}
-                onChange={(e) => setForm({ ...form, utility_type: e.target.value })}
+                onChange={(e) => {
+                  const newType = e.target.value;
+                  const defaultStatus = newType === "traffic" ? "light" : "unavailable";
+                  setForm({ ...form, utility_type: newType, status: defaultStatus });
+                }}
               >
                 <option value="water">💧 Water</option>
                 <option value="electricity">⚡ Electricity</option>
+                <option value="traffic">🚗 Traffic</option>
               </select>
-              <select
-                style={styles.select}
-                value={form.status}
-                onChange={(e) => setForm({ ...form, status: e.target.value })}
-              >
-                <option value="unavailable">❌ Unavailable</option>
-                <option value="available">✅ Available</option>
-              </select>
+              {form.utility_type === "traffic" ? (
+                <select
+                  style={styles.select}
+                  value={form.status}
+                  onChange={(e) => setForm({ ...form, status: e.target.value })}
+                >
+                  <option value="light">🟢 Light Traffic</option>
+                  <option value="moderate">🟡 Moderate Traffic</option>
+                  <option value="heavy">🔴 Heavy Traffic</option>
+                </select>
+              ) : (
+                <select
+                  style={styles.select}
+                  value={form.status}
+                  onChange={(e) => setForm({ ...form, status: e.target.value })}
+                >
+                  <option value="unavailable">❌ Unavailable</option>
+                  <option value="available">✅ Available</option>
+                </select>
+              )}
               <button
                 style={{ ...styles.btn, opacity: loading ? 0.7 : 1 }}
                 onClick={submitReport}

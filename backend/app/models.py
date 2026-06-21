@@ -12,10 +12,14 @@ from app.database import Base
 class UtilityType(str, enum.Enum):
     water = "water"
     electricity = "electricity"
+    traffic = "traffic"
 
 class StatusType(str, enum.Enum):
     available = "available"
     unavailable = "unavailable"
+    light = "light"
+    moderate = "moderate"
+    heavy = "heavy"
 
 class User(Base):
     __tablename__ = "users"
